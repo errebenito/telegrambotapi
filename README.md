@@ -12,4 +12,4 @@ How to make a Telegram bot
 
 License
 ------
-[telegrambotapi](https://github.com/errebenito/telegrambotapi) is released under the terms of the GNU General Public License, version 3.0 or later. See [LICENSE.md](../LICENSE.md)
+[telegrambotapi](https://github.com/errebenito/telegrambotapi) is released under the terms of the GNU General Public License, version 3.0 or later. See [LICENSE.md](../blob/master/LICENSE.md)
