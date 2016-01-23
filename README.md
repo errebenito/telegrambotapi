@@ -21,9 +21,5 @@ try {
 
 License
 -------
-telegrambotapi is distributed under the terms of the [GNU GPL version 3](http://www.gnu.org/licenses/gpl-3.0.txt) or, at your option, any later version.
-
-License
-------
-[telegrambotapi](https://github.com/errebenito/telegrambotapi) is released under the terms of the GNU General Public License, version 3.0 or later. See [LICENSE.md](../master/LICENSE.md)
+telegrambotapi is distributed under the terms of the [GNU GPL version 3](http://www.gnu.org/licenses/gpl-3.0.txt) or, at your option, any later version. See [LICENSE.md](../master/LICENSE.md)
 
