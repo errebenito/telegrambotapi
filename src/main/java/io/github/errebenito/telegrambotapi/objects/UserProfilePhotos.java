@@ -126,5 +126,4 @@ public class UserProfilePhotos {
 			System.arraycopy(pictures[i], 0, photos[i], 0, pictures[0].length);
 		}
 	}
-
 }

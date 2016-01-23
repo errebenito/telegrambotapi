@@ -11,6 +11,7 @@ import io.github.errebenito.telegrambotapi.objects.Location;
 import io.github.errebenito.telegrambotapi.objects.PhotoSize;
 import io.github.errebenito.telegrambotapi.objects.Sticker;
 import io.github.errebenito.telegrambotapi.objects.Video;
+import io.github.errebenito.telegrambotapi.objects.Voice;
 import io.github.errebenito.telegrambotapi.util.Constants;
 
 /**
@@ -57,6 +58,12 @@ public class MessageContentData {
 	@Expose
 	private Video video;
 	/**
+	 * Message is a voice note, information about the note. Optional.
+	 */
+	@SerializedName(Constants.VOICE)
+	@Expose
+	private Voice voice;
+	/**
 	 * Message is a shared contact, information about the contact. Optional.
 	 */
 	@SerializedName(Constants.CONTACT)
@@ -68,7 +75,13 @@ public class MessageContentData {
 	@SerializedName(Constants.LOCATION)
 	@Expose
 	private Location location;
-
+	/**
+	 * Caption for the photo or video, 0-200 characters. Optional.
+	 */
+	@SerializedName(Constants.CAPTION)
+	@Expose
+	private String caption;
+	
 	/**
 	 * 
 	 * Class constructor.
@@ -82,6 +95,8 @@ public class MessageContentData {
 		this.setSticker(null);
 		this.setText(null);
 		this.setVideo(null);
+		this.setVoice(null);
+		this.setCaption(null);
 	}
 
 	/**
@@ -103,7 +118,7 @@ public class MessageContentData {
 		} else {
 			this.setAudio(null);
 		}
-		if (object.has(Constants.AUDIO)) {
+		if (object.has(Constants.DOCUMENT)) {
 			this.setDocument(new Document(object.get(Constants.DOCUMENT)
 					.getAsJsonObject()));
 		} else {
@@ -126,6 +141,17 @@ public class MessageContentData {
 					.getAsJsonObject()));
 		} else {
 			this.setVideo(null);
+		}
+		if (object.has(Constants.VOICE)) {
+			this.setVoice(new Voice(object.get(Constants.VOICE)
+					.getAsJsonObject()));
+		} else {
+			this.setVoice(null);
+		}
+		if (object.has(Constants.CAPTION)) {
+			this.setCaption(object.get(Constants.CAPTION).getAsString());
+		} else {
+			this.setCaption(null);
 		}
 	}
 
@@ -281,5 +307,37 @@ public class MessageContentData {
 	 */
 	public final void setLocation(final Location loc) {
 		this.location = loc;
+	}
+
+	/**
+	 * Accessor for the voice. 
+	 * @return the voice
+	 */
+	public final Voice getVoice() {
+		return this.voice;
+	}
+
+	/**
+	 * Mutator for the  voice.
+	 * @param newVoice the voice
+	 */
+	public final void setVoice(final Voice newVoice) {
+		this.voice = newVoice;
+	}
+
+	/**
+	 * Accessor for the caption. 
+	 * @return the caption
+	 */
+	public final String getCaption() {
+		return this.caption;
+	}
+
+	/**
+	 * Mutator for the  caption.
+	 * @param newCaption the caption
+	 */
+	public final void setCaption(final String newCaption) {
+		this.caption = newCaption;
 	}
 }

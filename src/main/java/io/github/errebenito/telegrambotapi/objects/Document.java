@@ -13,7 +13,7 @@ import io.github.errebenito.telegrambotapi.util.Constants;
  * @author Raúl Benito
  *
  */
-public class Document extends File {
+public class Document extends BaseFile {
 
 	/**
 	 * Document thumbnail as defined by the sender.
@@ -92,5 +92,4 @@ public class Document extends File {
 	public final void setFileName(final String name) {
 		this.fileName = name;
 	}
-
 }

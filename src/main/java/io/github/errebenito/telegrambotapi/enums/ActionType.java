@@ -74,32 +74,32 @@ public enum ActionType {
 	}
 
 	/**
-	 * Mutator for the ID of the action.
+	 * Mutator for the ID of the action type.
 	 * 
 	 * @param ident
-	 *            The ID of the action
+	 *            The ID of the action type
 	 */
 	public final void setTypeId(final Integer ident) {
 		this.typeId = ident;
 	}
 
 	/**
-	 * Accessor for the description of the action.
+	 * Accessor for the description of the action type.
 	 * 
-	 * @return The description of the action
+	 * @return The description of the action type
 	 */
 	public final String getDescription() {
 		return this.description;
 	}
 
 	/**
-	 * Mutator for the description of the action.
+	 * Mutator for the description of the action type.
 	 * 
-	 * @param actionDescription
-	 *            The description of the action
+	 * @param typeDescription
+	 *            The description of the action type
 	 */
-	public final void setDescription(final String actionDescription) {
-		this.description = actionDescription;
+	public final void setDescription(final String typeDescription) {
+		this.description = typeDescription;
 	}
 
 }

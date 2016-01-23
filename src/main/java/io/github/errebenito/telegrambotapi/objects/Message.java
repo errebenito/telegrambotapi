@@ -42,7 +42,7 @@ public class Message {
 	 */
 	@Expose
 	@SerializedName(Constants.CHAT)
-	private ChatType chat;
+	private Chat chat;
 
 	/**
 	 * For forwarded messages, sender of the original message. Optional.
@@ -117,7 +117,7 @@ public class Message {
 		this.setMessageId(object.get(Constants.MESSAGE_ID).getAsInt());
 		this.setFrom(new User(object.get(Constants.FROM).getAsJsonObject()));
 		this.setDate(object.get(Constants.DATE).getAsInt());
-		this.setChat(new ChatType(object.get(Constants.CHAT)
+		this.setChat(new Chat(object.get(Constants.CHAT)
 				.getAsJsonObject()));
 		setOptionalFields(object);
 	}
@@ -196,18 +196,18 @@ public class Message {
 	 * @return the conversation where the message belongs — user in case of a
 	 *         private message, GroupChat in case of a group
 	 */
-	public final ChatType getChat() {
+	public final Chat getChat() {
 		return this.chat;
 	}
 
 	/**
 	 * Mutator for the conversation where the message belongs.
 	 * 
-	 * @param chatType
+	 * @param newChat
 	 *            the conversation where the message belongs
 	 */
-	public final void setChat(final ChatType chatType) {
-		this.chat = chatType;
+	public final void setChat(final Chat newChat) {
+		this.chat = newChat;
 	}
 
 	/**

@@ -7,13 +7,13 @@ import com.google.gson.annotations.SerializedName;
 import io.github.errebenito.telegrambotapi.util.Constants;
 
 /**
- * This object represents a file ready to be downloaded. 
+ * This class represents a generic file.
  * 
  * @author Raúl Benito
  *
  */
-public class File {
-	
+public class BaseFile {
+
 	/**
 	 * Unique identifier for this file.
 	 */
@@ -22,39 +22,29 @@ public class File {
 	private String fileId;
 
 	/**
-	 * File size. Optional.
+	 * MIME type of the file as defined by sender. Optional
+	 */
+	@Expose
+	@SerializedName(Constants.MIME_TYPE)
+	private String mimeType;
+
+	/**
+	 * BaseFile size. Optional.
 	 */
 	@Expose
 	@SerializedName(Constants.FILE_SIZE)
 	private Integer fileSize;
-	
-	/**
-	 * File path. Optional.
-	 */
-	@Expose
-	@SerializedName(Constants.FILE_PATH)
-	private String filePath;
-	
-	/**
-	 * 
-	 * Class constructor.
-	 */
-	public File() {
-		this.setFileId(null);
-		this.setFileSize(null);
-		this.setFilePath(null);
-	}
 
 	/**
 	 * 
 	 * Class constructor.
-	 * @param path The file path
 	 */
-	public File(final String path) {
+	public BaseFile() {
 		this.setFileId(null);
 		this.setFileSize(null);
-		this.setFilePath(path);
+		this.setMimeType(null);
 	}
+
 	/**
 	 * 
 	 * Class constructor.
@@ -62,16 +52,35 @@ public class File {
 	 * @param object
 	 *            The JsonObject from which the BaseFile will be constructed.
 	 */
-	public File(final JsonObject object) {
+	public BaseFile(final JsonObject object) {
 		this.setFileId(object.get(Constants.FILE_ID).getAsString());
 		if (object.has(Constants.FILE_SIZE)) {
 			this.setFileSize(object.get(Constants.FILE_SIZE).getAsInt());
 		} 
-		if (object.has(Constants.FILE_PATH)) {
-			this.setFilePath(object.get(Constants.FILE_PATH).getAsString());
+		if (object.has(Constants.MIME_TYPE)) {
+			this.setMimeType(object.get(Constants.MIME_TYPE).getAsString());
 		} 
 	}
-	
+
+	/**
+	 * Accessor for the file's mime type.
+	 * 
+	 * @return the mime file's type
+	 */
+	public final String getMimeType() {
+		return this.mimeType;
+	}
+
+	/**
+	 * Mutator for the file's mime type.
+	 * 
+	 * @param type
+	 *            the file's mime type
+	 */
+	public final void setMimeType(final String type) {
+		this.mimeType = type;
+	}
+
 	/**
 	 * Accessor for the file size.
 	 * 
@@ -108,24 +117,5 @@ public class File {
 	 */
 	public final void setFileId(final String ident) {
 		this.fileId = ident;
-	}
-	
-	/**
-	 * Accessor for the file path.
-	 * 
-	 * @return the file path
-	 */
-	public final String getFilePath() {
-		return this.filePath;
-	}
-
-	/**
-	 * Mutator for the file's path.
-	 * 
-	 * @param path
-	 *            the file's path
-	 */
-	public final void setFilePath(final String path) {
-		this.filePath = path;
 	}
 }

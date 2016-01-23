@@ -61,6 +61,36 @@ public class MessageChatData {
 	private Boolean groupChatCreated;
 	
 	/**
+	 * Informs that the supergroup has been created. Optional.
+	 */
+	@Expose
+	@SerializedName(Constants.SGROUP_CREATED)
+	private Boolean sgroupCreated;
+	
+	/**
+	 * Informs that the channel has been created. Optional.
+	 */
+	@Expose
+	@SerializedName(Constants.CHANNEL_CREATED)
+	private Boolean channelCreated;
+	
+	/**
+	 * Informs the identifier of the supergroup to which the group 
+	 * was migrated. Optional.
+	 */
+	@Expose
+	@SerializedName(Constants.MIG_TO_CHAT_ID)
+	private Integer migrateToChatId;
+	
+	/**
+	 * Informs the identifier of the supergroup from which the group 
+	 * was migrated. Optional.
+	 */
+	@Expose
+	@SerializedName(Constants.MIG_FROM_CHAT_ID)
+	private Integer migrateFromChatId;
+	
+	/**
 	 * 
 	 * Class constructor.
 	 * @param object The JsonObject from which the chat data will be 
@@ -96,11 +126,49 @@ public class MessageChatData {
 		} else {
 			this.setDeleteChatPhoto(null);
 		}
+		setCreationFlag(object);
+		setMigrationId(object);
+	}
+
+	/**
+	 * @param object the JSON object from which the creation flag will be set.
+	 */
+	private void setCreationFlag(final JsonObject object) {
 		if (object.has(Constants.GROUP_CREATED)) {
 			this.setGroupChatCreated(object.get(Constants.GROUP_CREATED)
 					.getAsBoolean());
 		} else {
 			this.setGroupChatCreated(null);
+		}
+		if (object.has(Constants.SGROUP_CREATED)) {
+			this.setSgroupCreated(object.get(Constants.SGROUP_CREATED)
+					.getAsBoolean());
+		} else {
+			this.setSgroupCreated(null);
+		}
+		if (object.has(Constants.CHANNEL_CREATED)) {
+			this.setChannelCreated(object.get(Constants.CHANNEL_CREATED)
+					.getAsBoolean());
+		} else {
+			this.setChannelCreated(null);
+		}
+	}
+
+	/**
+	 * @param object The JSON object from which the migration IDs will be set.
+	 */
+	private void setMigrationId(final JsonObject object) {
+		if (object.has(Constants.MIG_FROM_CHAT_ID)) {
+			this.setMigrateFromChatId(object.get(Constants.MIG_FROM_CHAT_ID)
+					.getAsInt());
+		} else {
+			this.setMigrateFromChatId(null);
+		}
+		if (object.has(Constants.MIG_TO_CHAT_ID)) {
+			this.setMigrateToChatId(object.get(Constants.MIG_TO_CHAT_ID)
+					.getAsInt());
+		} else {
+			this.setMigrateToChatId(null);
 		}
 	}
 	
@@ -235,6 +303,76 @@ public class MessageChatData {
 	 */
 	public final void setGroupChatCreated(final Boolean created) {
 		this.groupChatCreated = created;
+	}
+
+	/**
+	 * Accessor for the channel creation flag. 
+	 * @return the channel created flag
+	 */
+	public final Boolean getChannelCreated() {
+		return this.channelCreated;
+	}
+
+	/**
+	 * Mutator for the  channel creation flag.
+	 * 
+	 * @param created
+	 *            <em>true</em> if the channel was created; <em>false</em>
+	 *            otherwise.
+	 */
+	public final void setChannelCreated(final Boolean created) {
+		this.channelCreated = created;
+	}
+
+	/**
+	 * Accessor for the supergroup creation flag. 
+	 * @return the supergroup created flag.
+	 */
+	public final Boolean getSgroupCreated() {
+		return this.sgroupCreated;
+	}
+
+	/**
+	 * Mutator for the  superGroupChatCreated.
+	 * 
+	 * @param created
+	 *            <em>true</em> if the supergroup was created; <em>false</em>
+	 *            otherwise.
+	 */
+	public final void setSgroupCreated(final Boolean created) {
+		this.sgroupCreated = created;
+	}
+
+	/**
+	 * Accessor for the id of the supergroup the chat was migrated to. 
+	 * @return the id of the supergroup the chat was migrated to
+	 */
+	public final Integer getMigrateToChatId() {
+		return this.migrateToChatId;
+	}
+
+	/**
+	 * Mutator for the id of the supergroup the chat was migrated to. 
+	 * @param newMigTo the id of the supergroup the chat was migrated to
+	 */
+	public final void setMigrateToChatId(final Integer newMigTo) {
+		this.migrateToChatId = newMigTo;
+	}
+
+	/**
+	 * Accessor for the id of the supergroup the chat was migrated from. 
+	 * @return the id of the supergroup the chat was migrated from
+	 */
+	public final Integer getMigrateFromChatId() {
+		return this.migrateFromChatId;
+	}
+
+	/**
+	 * Mutator for the id of the supergroup the chat was migrated from. 
+	 * @param newMigFrom the id of the supergroup the chat was migrated from
+	 */
+	public final void setMigrateFromChatId(final Integer newMigFrom) {
+		this.migrateFromChatId = newMigFrom;
 	}
 
 }

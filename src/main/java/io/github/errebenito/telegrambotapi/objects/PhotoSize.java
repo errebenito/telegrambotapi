@@ -35,7 +35,7 @@ public class PhotoSize {
 	private Integer height;
 
 	/**
-	 * File size. Optional.
+	 * BaseFile size. Optional.
 	 */
 	@Expose
 	@SerializedName(Constants.FILE_SIZE)

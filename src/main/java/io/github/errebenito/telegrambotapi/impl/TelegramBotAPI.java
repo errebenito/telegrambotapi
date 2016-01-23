@@ -2,6 +2,8 @@ package io.github.errebenito.telegrambotapi.impl;
 
 import io.github.errebenito.telegrambotapi.enums.ActionType;
 import io.github.errebenito.telegrambotapi.exceptions.CommandFailedException;
+import io.github.errebenito.telegrambotapi.objects.File;
+import io.github.errebenito.telegrambotapi.objects.InlineQueryResult;
 import io.github.errebenito.telegrambotapi.objects.Message;
 import io.github.errebenito.telegrambotapi.objects.SelectiveObject;
 import io.github.errebenito.telegrambotapi.objects.Update;
@@ -27,9 +29,11 @@ public interface TelegramBotAPI {
 	 * Sends text messages.
 	 * 
 	 * @param chatId
-	 *            Unique identifier for the message recipient
+	 *            Unique identifier for the message recipient.
 	 * @param text
-	 *            Text of the message to be sent
+	 *            Text of the message to be sent.
+	 * @param parseMode
+	 * 			  Enables the use of Markdown in messages.           
 	 * @param disablePreview
 	 *            Disables link previews for links in this message.
 	 * @param reply
@@ -39,8 +43,8 @@ public interface TelegramBotAPI {
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
-	Message sendMessage(Integer chatId, String text, Boolean disablePreview, 
-			Boolean reply, SelectiveObject markup) 
+	Message sendMessage(Integer chatId, String text, String parseMode, 
+			Boolean disablePreview,	Boolean reply, SelectiveObject markup) 
 					throws CommandFailedException;
 
 	/**
@@ -86,6 +90,10 @@ public interface TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param audio
 	 *            Audio to send. Either a string id, or InputFile.
+	 * @param duration
+	 * 			  Duration of the audio.
+	 * @param performer 
+	 * 			  Performer of the audio.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -93,8 +101,9 @@ public interface TelegramBotAPI {
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
-	Message sendAudio(Integer chatId, Object audio, Integer originalId, 
-			SelectiveObject markup) throws CommandFailedException;
+	Message sendAudio(Integer chatId, Object audio, Integer duration, 
+			String performer, Integer originalId, SelectiveObject markup) 
+					throws CommandFailedException;
 
 	/**
 	 * Sends a file. It's used as a wrapper for the file sending methods.
@@ -102,7 +111,7 @@ public interface TelegramBotAPI {
 	 * @param chatId
 	 *            Unique identifier for the message recipient.
 	 * @param document
-	 *            File to send. Either a string id, or InputFile.
+	 *            BaseFile to send. Either a string id, or InputFile.
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -138,6 +147,10 @@ public interface TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param video
 	 *            Video to send. Either a string id, or InputFile.
+	 * @param duration
+	 * 			  The duration of the video.
+	 * @param caption
+	 * 			  The caption of the video.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -145,9 +158,29 @@ public interface TelegramBotAPI {
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
-	Message sendVideo(Integer chatId, Object video, Integer originalId, 
-			SelectiveObject markup) throws CommandFailedException;
+	Message sendVideo(Integer chatId, Object video, Integer duration, 
+			String caption, Integer originalId,	SelectiveObject markup) 
+					throws CommandFailedException;
 
+	/**
+	 * Sends a voice note.
+	 * @param chatId
+	 * 			  Unique identifier for the message recipient.
+	 * @param voice
+	 * 			  Voice note to send. Either a string id or InputFile.
+	 * @param duration
+	 * 			  The duration of the voice note.
+	 * @param originalId
+	 * 			  If the message is a reply, ID of the original message.
+	 * @param markup
+	 *            Additional interface options.
+	 * @return On success, the sent Message is returned.
+	 * @throws CommandFailedException If the command execution fails.
+	 */
+	Message sendVoice(Integer chatId, Object voice, Integer duration, 
+			Integer originalId,	SelectiveObject markup) 
+					throws CommandFailedException;
+	
 	/**
 	 * Sends a location.
 	 * 
@@ -199,6 +232,37 @@ public interface TelegramBotAPI {
 			Integer limit) throws CommandFailedException;
 
 	/**
+	 * Get basic info about a file and prepare it for downloading.
+	 * @param fileId
+	 * 			  File identifier to get info about.
+	 * @return A File object containing the file.
+	 * @throws CommandFailedException If the command execution fails.
+	 */
+	File getFile(String fileId) throws CommandFailedException;
+	
+	/**
+	 * Send answers to an inline query.
+	 * @param queryId
+	 * 			   The query Id
+	 * @param results
+	 * 			   An array of InlineQueryResult with the results.
+	 * @param cacheTime
+	 * 			   The maximum amount of time in seconds that the 
+	 * 			   result may be cached.
+	 * @param isPersonal
+	 * 			   <em>True</em> if the results may be cached on the 
+	 * 			   server only for the user who sent the query.
+	 * @param nextOffset
+	 * 			   The offset that a client should send in the next 
+	 * 			   query with the same text to receive more results.
+	 * @return <em>true</em> on success; <em>false</em> otherwise.
+	 * @throws CommandFailedException If the command execution fails.
+	 */
+	Boolean answerInlineQuery(String queryId, InlineQueryResult[] results,
+			Integer cacheTime, Boolean isPersonal, String nextOffset) 
+					throws CommandFailedException;
+	
+	/**
 	 * receive incoming updates using long polling.
 	 * 
 	 * @param offset
@@ -232,11 +296,4 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	void setWebhook(String url) throws CommandFailedException;
-	
-	/**
-	 * Abstract method for handling commands. Must be reimplemented.
-	 * @param update The update that contains the command.
-	 * @throws CommandFailedException If the command execution fails.
-	 */
-	void handleCommand(Update update) throws CommandFailedException;
 }

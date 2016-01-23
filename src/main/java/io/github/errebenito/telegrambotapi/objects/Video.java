@@ -11,7 +11,7 @@ import io.github.errebenito.telegrambotapi.util.Constants;
  * @author Raúl Benito
  *
  */
-public class Video  extends File {
+public class Video  extends BaseFile {
 
 	/**
 	 * Video width.
@@ -40,13 +40,6 @@ public class Video  extends File {
 	@Expose
 	@SerializedName(Constants.THUMB)
 	private PhotoSize thumb;
-	
-	/**
-	 * Text description of the video (usually empty). Optional.
-	 */
-	@Expose
-	@SerializedName(Constants.CAPTION)
-	private String caption;
 
 	/**
 	 * 
@@ -58,11 +51,12 @@ public class Video  extends File {
 		this.setHeight(object.get(Constants.HEIGHT).getAsInt());
 		this.setWidth(object.get(Constants.WIDTH).getAsInt());
 		this.setDuration(object.get(Constants.DURATION).getAsInt());
-		this.setThumb(new PhotoSize(object.get(Constants.THUMB)
+		if (object.has(Constants.THUMB)) {
+			this.setThumb(new PhotoSize(object.get(Constants.THUMB)
 				.getAsJsonObject()));
-		if (object.has(Constants.CAPTION)) {
-			this.setCaption(object.get(Constants.CAPTION).getAsString());
-		} 
+		} else {
+			this.setThumb(null);
+		}
 	}
 	
 	/**
@@ -72,7 +66,6 @@ public class Video  extends File {
 		super();
 		this.setWidth(null);
 		this.setHeight(null);
-		this.setCaption(null);
 		this.setDuration(null);
 		this.setThumb(null);
 	}
@@ -140,20 +133,4 @@ public class Video  extends File {
 	public final void setThumb(final PhotoSize thumbnail) {
 		this.thumb = thumbnail;
 	}
-
-	/**
-	 * Accessor for the caption. 
-	 * @return the caption
-	 */
-	public final String getCaption() {
-		return this.caption;
-	}
-
-	/**
-	 * Mutator for the caption.
-	 * @param text the caption
-	 */
-	public final void setCaption(final String text) {
-		this.caption = text;
-	}	
 }

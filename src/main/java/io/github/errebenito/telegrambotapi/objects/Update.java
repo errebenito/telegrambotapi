@@ -28,6 +28,21 @@ public class Update {
 	@Expose
 	@SerializedName(Constants.MESSAGE)
 	private Message message;
+	
+	/**
+	 * The incoming inline query. Optional.
+	 */
+	@Expose
+	@SerializedName(Constants.INLINE_QUERY)
+	private InlineQuery inlineQuery;
+
+	/**
+	 * The result of an inline query chosen by a user and sent 
+	 * to their partner.
+	 */
+	@Expose
+	@SerializedName(Constants.CHOSEN_RESULT)
+	private ChosenInlineResult chosenResult;
 
 	/**
 	 * 
@@ -40,6 +55,14 @@ public class Update {
 			this.setMessage(new Message(object.get(Constants.MESSAGE)
 					.getAsJsonObject()));
 		} 
+		if (object.has(Constants.INLINE_QUERY)) {
+			this.setInlineQuery(new InlineQuery(object
+					.get(Constants.INLINE_QUERY).getAsJsonObject()));
+		}
+		if (object.has(Constants.CHOSEN_RESULT)) {
+			this.setChosenResult(new ChosenInlineResult(object
+					.get(Constants.CHOSEN_RESULT).getAsJsonObject()));
+		}
 	}
 
 	/**
@@ -87,6 +110,38 @@ public class Update {
 	 */
 	public final void setMessage(final Message newMessage) {
 		this.message = newMessage;
+	}
+
+	/**
+	 * Accessor for the inline query. 
+	 * @return the query
+	 */
+	public final InlineQuery getInlineQuery() {
+		return this.inlineQuery;
+	}
+
+	/**
+	 * Mutator for the  inline query.
+	 * @param newQuery the query
+	 */
+	public final void setInlineQuery(final InlineQuery newQuery) {
+		this.inlineQuery = newQuery;
+	}
+
+	/**
+	 * Accessor for the inline query result. 
+	 * @return the inline query result
+	 */
+	public final ChosenInlineResult getChosenResult() {
+		return this.chosenResult;
+	}
+
+	/**
+	 * Mutator for the  inline query result.
+	 * @param newResult the result
+	 */
+	public final void setChosenResult(final ChosenInlineResult newResult) {
+		this.chosenResult = newResult;
 	}
 
 }

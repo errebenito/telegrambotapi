@@ -11,8 +11,15 @@ import io.github.errebenito.telegrambotapi.util.Constants;
  * @author Raúl Benito
  *
  */
-public class User extends ChatType {
+public class User {
 
+	/**
+	 * Unique identifier for this ChatType.
+	 */
+	@Expose
+	@SerializedName(Constants.ID)
+	private Integer id;
+	
 	/**
 	 * User‘s or bot’s first name.
 	 */
@@ -42,7 +49,6 @@ public class User extends ChatType {
 	 *            The JsonObject from which the User will be constructed.
 	 */
 	public User(final JsonObject object) {
-		super(object);
 		this.setFirstName(object.get(Constants.FIRST_NAME).getAsString());
 		if (object.has(Constants.LAST_NAME)) {
 			this.setLastName(object.get(Constants.LAST_NAME).getAsString());
@@ -110,5 +116,30 @@ public class User extends ChatType {
 		this.userName = newUserName;
 	}
 	
+	/**
+	 * Accessor for the identifier of the chat.
+	 * 
+	 * @return the identifier of the chat
+	 */
+	public final Integer getId() {
+		return this.id;
+	}
 	
+	/**
+	 * Mutator for the identifier of the chat.
+	 * 
+	 * @param ident
+	 *            the identifier of the chat
+	 */
+	public final void setId(final Integer ident) {
+		this.id = ident;
+	}	
+	
+	/**
+	 * Accessor for the full name of the user.
+	 * @return the first and last names of the user
+	 */
+	public final String getUserFullName() {
+		return this.getFirstName() + " " + this.getLastName();
+	}
 }

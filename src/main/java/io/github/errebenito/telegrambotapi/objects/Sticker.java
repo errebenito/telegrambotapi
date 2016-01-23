@@ -55,5 +55,4 @@ public class Sticker extends PhotoSize {
 		this.thumb = stickerThumb;
 	}
 	
-	
 }

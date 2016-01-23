@@ -25,6 +25,8 @@ public final class FieldUtils {
 	/**
 	 * Adds the optional fields of the Message for the sendMessage method.
 	 * 
+	 * @param parseMode
+	 * 			The flag to enable or disable Markdown
 	 * @param disablePreview
 	 *            Disables link previews for links in this message.
 	 * @param reply
@@ -34,10 +36,14 @@ public final class FieldUtils {
 	 * @return A list with the optional fields' names and values.
 	 */
 	public static List<BasicNameValuePair> addOptionalFields(
-			final Boolean disablePreview, final Boolean reply,
-			final SelectiveObject markup) {
+			final String parseMode, final Boolean disablePreview, 
+			final Boolean reply, final SelectiveObject markup) {
 		final List<BasicNameValuePair> values = 
 				new ArrayList<BasicNameValuePair>();
+		if (parseMode != null) {
+			values.add(new BasicNameValuePair(Constants.PARSE_MODE, 
+					parseMode));
+		}
 		if (disablePreview != null) {
 			values.add(new BasicNameValuePair(Constants.DISABLE_PREVIEW, 
 					disablePreview.toString()));

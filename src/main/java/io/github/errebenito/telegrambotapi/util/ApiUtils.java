@@ -19,12 +19,14 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import io.github.errebenito.telegrambotapi.exceptions.CommandFailedException;
+import io.github.errebenito.telegrambotapi.exceptions.RetrievalFailedException;
 import io.github.errebenito.telegrambotapi.objects.InputFile;
 import io.github.errebenito.telegrambotapi.objects.Message;
 import io.github.errebenito.telegrambotapi.objects.SelectiveObject;
@@ -67,11 +69,12 @@ public final class ApiUtils {
 	 * @param httpPost The HTTP POST request.
 	 * @param values The contents of the request.
 	 * @return An HTTPBufferedEntity.
-	 * @throws CommandFailedException If the retrieval fails for any reason.
+	 * @throws RetrievalFailedException 
+	 *         If the retrieval fails for any reason.
 	 */
 	public static BufferedHttpEntity retrieveEntityFromHttpPost(
 			final HttpPost httpPost, final List<BasicNameValuePair> values) 
-					throws CommandFailedException {
+					throws RetrievalFailedException {
 		BufferedHttpEntity entity = null;
 		final HttpClient httpClient = HttpClientBuilder.create()
 			.setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
@@ -83,22 +86,22 @@ public final class ApiUtils {
 		} catch (UnsupportedEncodingException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.INVALID_ENCODING + Constants.ENCODING);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		} catch (JsonSyntaxException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.BAD_JSON_ERROR);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		} catch (ParseException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.JSON_PARSE_ERROR);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		} catch (IOException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.IO_ERROR);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		}
 
@@ -109,11 +112,12 @@ public final class ApiUtils {
 	 * Retrieves the entity that results from executing the HTTP POST request.
 	 * @param httpPost The HTTP POST request.
 	 * @return An HTTPBufferedEntity.
-	 * @throws CommandFailedException If the retrieval fails for any reason.
+	 * @throws RetrievalFailedException 
+	 * 		   If the retrieval fails for any reason.
 	 */
 	public static BufferedHttpEntity retrieveEntityFromHttpPost(
 			final HttpPost httpPost) 
-					throws CommandFailedException {
+					throws RetrievalFailedException {
 		BufferedHttpEntity entity = null;
 		final HttpClient httpClient = HttpClientBuilder.create()
 			.setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
@@ -123,22 +127,22 @@ public final class ApiUtils {
 		} catch (UnsupportedEncodingException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.INVALID_ENCODING + Constants.ENCODING);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		} catch (JsonSyntaxException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.BAD_JSON_ERROR);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		} catch (ParseException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.JSON_PARSE_ERROR);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		} catch (IOException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error(Constants.POST_ERROR);
-				throw new CommandFailedException(e);
+				throw new RetrievalFailedException(e);
 			}
 		}
 
@@ -156,6 +160,40 @@ public final class ApiUtils {
 			final List<BasicNameValuePair> values) 
 					throws CommandFailedException {
 			BufferedHttpEntity entity;
+			if (values == null) {
+				try {
+					entity = retrieveEntityFromHttpPost(httpPost);
+				} catch (RetrievalFailedException e) {
+					throw new CommandFailedException(e);
+				}
+			} else {
+				try {
+					entity = retrieveEntityFromHttpPost(httpPost, values);
+				} catch (RetrievalFailedException e) {
+					throw new CommandFailedException(e);
+				}
+			}
+			final JsonParser parser = new JsonParser();
+			final JsonObject object = parser.parse(entity.toString())
+					.getAsJsonObject();
+			if (!object.has(Constants.OK)) {
+				throw new CommandFailedException(Constants.INVALID_RESPONSE);
+			}
+			return new Message(object);
+	}
+	
+	/**
+	 *	Executes an API method.
+	 * @param httpPost the HTTP POST request.
+	 * @param values The contents of the request.
+	 * @return The sent message if the operation was successful.
+	 * @throws RetrievalFailedException 
+	 * 		   If the execution fails for any reason.
+	 */
+	public static Boolean executeAnswerQuery(final HttpPost httpPost, 
+			final List<BasicNameValuePair> values) 
+					throws RetrievalFailedException {
+			BufferedHttpEntity entity;
 			final JsonParser parser = new JsonParser();
 			if (values == null) {
 				entity = retrieveEntityFromHttpPost(httpPost);
@@ -164,10 +202,8 @@ public final class ApiUtils {
 			}
 			final JsonObject object = parser.parse(entity.toString())
 					.getAsJsonObject();
-			if (!object.has(Constants.OK)) {
-				throw new CommandFailedException(Constants.INVALID_RESPONSE);
-			}
-			return new Message(object);
+			
+			return object.has(Constants.OK);
 	}
 	
 	/**
@@ -188,14 +224,14 @@ public final class ApiUtils {
 	 * @param chatId
 	 *            Unique identifier for the message recipient.
 	 * @param file
-	 *            File to send.
+	 *            BaseFile to send.
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
 	 *            Additional interface options.
 	 * @return An HttpEntity
 	 */
-	public static HttpEntity prepareEntity(final String fileType, 
+	public static MultipartEntityBuilder prepareEntity(final String fileType, 
 			final Integer chatId, final InputFile file, 
 			final Integer originalId, final SelectiveObject markup) {
 		final MultipartEntityBuilder builder = 
@@ -212,7 +248,7 @@ public final class ApiUtils {
 			builder.addTextBody(Constants.REPLY_MARKUP, 
 					markup.toString());
 		}
-		return builder.build();
+		return builder;
 	}
 	
 	/**
@@ -221,7 +257,7 @@ public final class ApiUtils {
 	 * @param chatId
 	 *            Unique identifier for the message recipient.
 	 * @param file
-	 *            File to send.
+	 *            BaseFile to send.
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -251,5 +287,59 @@ public final class ApiUtils {
 			values.add(new BasicNameValuePair(Constants.CAPTION, caption));
 		}
 		return values;
+	}
+
+	/**
+	 * Prepare an HTTP entity with an audio file.
+	 * @param builder
+	 * 			The builder for the multipart entity,
+	 * @param duration
+	 * 			The duration of the audio.
+	 * @param performer
+	 * 			The performer of the audio.
+	 * @return The HTTP entity.
+	 */
+	public static HttpEntity prepareAudio(final MultipartEntityBuilder builder, 
+			final Integer duration, final String performer) {
+		if (duration != null) {
+			builder.addTextBody(Constants.DURATION, 
+					duration.toString());
+		}
+		if (performer != null) {
+			builder.addTextBody(Constants.PERFORMER, performer);
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Prepare an HTTP entity with a video file.
+	 * @param builder
+	 * 			The builder for the multipart entity,
+	 * @param duration
+	 * 			The duration of the video.
+	 * @param caption
+	 * 			The caption of the video.
+	 * @return The HTTP entity.
+	 */
+	public static HttpEntity prepareVideoOrVoice(
+			final MultipartEntityBuilder builder, 
+			final Integer duration, final String caption) {
+		if (duration != null) {
+			builder.addTextBody(Constants.DURATION, 
+					duration.toString());
+		}
+		if (caption != null) {
+			builder.addTextBody(Constants.CAPTION, caption);
+		}
+		return builder.build();
+	}
+	
+	/**
+	 * Transforms the object to JSON.
+	 * @param object The object to be transformed
+	 * @return A String containing the JSON representation of the object.
+	 */
+	public static String toJson(final Object object) {
+		return new Gson().toJson(object);
 	}
 }

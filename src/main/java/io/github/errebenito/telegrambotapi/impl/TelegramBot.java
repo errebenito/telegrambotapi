@@ -1,18 +1,11 @@
 package io.github.errebenito.telegrambotapi.impl;
 
 import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -33,6 +26,9 @@ import com.google.gson.JsonParser;
 
 import io.github.errebenito.telegrambotapi.enums.ActionType;
 import io.github.errebenito.telegrambotapi.exceptions.CommandFailedException;
+import io.github.errebenito.telegrambotapi.exceptions.RetrievalFailedException;
+import io.github.errebenito.telegrambotapi.objects.File;
+import io.github.errebenito.telegrambotapi.objects.InlineQueryResult;
 import io.github.errebenito.telegrambotapi.objects.InputFile;
 import io.github.errebenito.telegrambotapi.objects.Message;
 import io.github.errebenito.telegrambotapi.objects.SelectiveObject;
@@ -42,7 +38,6 @@ import io.github.errebenito.telegrambotapi.objects.UserProfilePhotos;
 import io.github.errebenito.telegrambotapi.util.ApiUtils;
 import io.github.errebenito.telegrambotapi.util.Constants;
 import io.github.errebenito.telegrambotapi.util.FieldUtils;
-import io.github.errebenito.telegrambotapi.util.dto.MethodUrl;
 
 /**
  * This class represents a bot.
@@ -50,30 +45,28 @@ import io.github.errebenito.telegrambotapi.util.dto.MethodUrl;
  * @author Raúl Benito
  *
  */
-public abstract class AbstractBot extends HttpServlet 
-implements TelegramBotAPI {
+public class TelegramBot implements TelegramBotAPI {
 
-	/**
-	 * Generated ID.
-	 */
-	private static final long serialVersionUID = 9172233920271339366L;
-	
 	/**
 	 * Logger for the AbstractBot class.
 	 */
 	private static final Logger LOG = LogManager.getLogger(
-			AbstractBot.class);
-
-	/**
-	 * The bot's token.
-	 */
-	private final transient String botToken;
+			TelegramBot.class);
 	
 	/**
 	 * The HTTP client.
 	 */
-	private transient CloseableHttpClient httpClient;
+	private final transient CloseableHttpClient httpClient;
+	
+	/**
+	 * The bot's file API URL.
+	 */
+	private final transient String apiUrl;
 
+	/**
+	 * The bot's API URL.
+	 */
+	private final transient String fileUrl;
 	
 	/**
 	 * 
@@ -82,14 +75,14 @@ implements TelegramBotAPI {
 	 * @param token
 	 *            The bot's token.
 	 */
-	public AbstractBot(final String token) {
-		super();
-		this.botToken = token;
+	public TelegramBot(final String token) {
+		this.fileUrl = Constants.FILE_URL + token + "/";
+		this.apiUrl = Constants.BASE_URL + token + "/";
 		this.httpClient = HttpClientBuilder.create()
 				.setSSLHostnameVerifier(new NoopHostnameVerifier())
 				.build();
 	}
-
+	
 	/**
 	 * A simple method for testing your bot's auth token. Requires no
 	 * parameters.
@@ -98,8 +91,8 @@ implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final User getMe() throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.GET_ME).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.GET_ME);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		BufferedHttpEntity entity;
@@ -107,7 +100,7 @@ implements TelegramBotAPI {
 		final JsonParser parser = new JsonParser();
 		User user = new User();
 		try {
-			entity = new BufferedHttpEntity(httpClient.execute(httpPost)
+			entity = new BufferedHttpEntity(this.httpClient.execute(httpPost)
 					.getEntity());
 			responseContent = EntityUtils.toString(entity, 
 					Constants.ENCODING);
@@ -139,6 +132,8 @@ implements TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param text
 	 *            Text of the message to be sent.
+	 * @param parseMode
+	 * 			  The flag to enable or disable Markdown           
 	 * @param disablePreview
 	 *            Disables link previews for links in this message.
 	 * @param reply
@@ -149,11 +144,11 @@ implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final Message sendMessage(final Integer chatId, 
-			final String text, final Boolean disablePreview, 
-			final Boolean reply, final SelectiveObject markup) 
-					throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken,
-				Constants.SEND_MESSAGE).toString());
+			final String text, final String parseMode, 
+			final Boolean disablePreview, final Boolean reply, 
+			final SelectiveObject markup) throws CommandFailedException {
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_MESSAGE);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		final List<BasicNameValuePair> values = 
@@ -161,8 +156,8 @@ implements TelegramBotAPI {
 		values.add(new BasicNameValuePair(Constants.CHAT_ID, 
 				chatId.toString()));
 		values.add(new BasicNameValuePair(Constants.TEXT, text));
-		values.addAll(FieldUtils.addOptionalFields(disablePreview, reply,
-				markup));
+		values.addAll(FieldUtils.addOptionalFields(parseMode, 
+				disablePreview, reply, markup));
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
 
@@ -182,8 +177,8 @@ implements TelegramBotAPI {
 	public final Message forwardMessage(final Integer chatId, 
 			final Integer fromId, final Integer messageId) 
 					throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken,
-				Constants.FORWARD_MESSAGE).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.FORWARD_MESSAGE);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		final List<BasicNameValuePair> values = 
@@ -216,15 +211,15 @@ implements TelegramBotAPI {
 	public final Message sendPhoto(final Integer chatId, final Object photo, 
 			final String caption, final Integer originalId, 
 			final SelectiveObject markup) throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_PHOTO).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_PHOTO);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		List<BasicNameValuePair> values = null;
 		if (photo instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils.prepareEntity(
 					Constants.PHOTO, chatId, (InputFile) photo, 
-					originalId, markup);
+					originalId, markup).build();
             httpPost.setEntity(multipart);
 		} else if (photo instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) photo, 
@@ -240,6 +235,10 @@ implements TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param audio
 	 *            Audio to send. Either a string id, or InputFile.
+	 * @param duration
+	 * 			  The duration of the audio.
+	 * @param performer
+	 * 			  The performer of the audio.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -247,18 +246,21 @@ implements TelegramBotAPI {
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
-	public final Message sendAudio(final Integer chatId, final Object audio, 
-			final Integer originalId, final SelectiveObject markup) 
+	public final Message sendAudio(final Integer chatId, 
+			final Object audio, final Integer duration, 
+			final String performer, final Integer originalId,
+			final SelectiveObject markup) 
 					throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_AUDIO).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_AUDIO);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		List<BasicNameValuePair> values = null;
 		if (audio instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
-					.prepareEntity(Constants.AUDIO, chatId, 
-							(InputFile) audio, originalId, markup);
+					.prepareAudio(ApiUtils.prepareEntity(Constants.AUDIO, 
+							chatId, (InputFile) audio, originalId, markup),
+							duration, performer);
             httpPost.setEntity(multipart);
 		} else if (audio instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) audio, 
@@ -273,7 +275,7 @@ implements TelegramBotAPI {
 	 * @param chatId
 	 *            Unique identifier for the message recipient.
 	 * @param document
-	 *            File to send. Either a string id, or InputFile.
+	 *            BaseFile to send. Either a string id, or InputFile.
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -284,15 +286,15 @@ implements TelegramBotAPI {
 	public final Message sendDocument(final Integer chatId, 
 			final Object document, final Integer originalId, 
 			final SelectiveObject markup) throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_DOCUMENT).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_DOCUMENT);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		List<BasicNameValuePair> values = null;
 		if (document instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
 					.prepareEntity(Constants.DOCUMENT, chatId, 
-							(InputFile) document, originalId, markup);
+							(InputFile) document, originalId, markup).build();
             httpPost.setEntity(multipart);
 		} else if (document instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) document, 
@@ -319,15 +321,15 @@ implements TelegramBotAPI {
 			final Object sticker, final Integer originalId, 
 			final SelectiveObject markup) 
 					throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_STICKER).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_STICKER);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		List<BasicNameValuePair> values = null;
 		if (sticker instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
 					.prepareEntity(Constants.STICKER, chatId, 
-							(InputFile) sticker, originalId, markup);
+							(InputFile) sticker, originalId, markup).build();
             httpPost.setEntity(multipart);
 		} else if (sticker instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) sticker, 
@@ -343,6 +345,10 @@ implements TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param video
 	 *            Video to send. Either a string id, or InputFile.
+	 * @param duration
+	 * 			  The duration of the video.
+	 * @param caption
+	 * 			  The caption of the video.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -351,17 +357,20 @@ implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final Message sendVideo(final Integer chatId, final Object video, 
+			final Integer duration, final String caption, 
 			final Integer originalId, final SelectiveObject markup) 
 					throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_VIDEO).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_VIDEO);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		List<BasicNameValuePair> values = null;
 		if (video instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
-					.prepareEntity(Constants.VIDEO, chatId, 
-							(InputFile) video, originalId, markup);
+					.prepareVideoOrVoice(ApiUtils.prepareEntity(
+							Constants.VIDEO, chatId, 
+							(InputFile) video, originalId, markup), 
+							duration, caption);
             httpPost.setEntity(multipart);
 		} else if (video instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) video, 
@@ -370,6 +379,45 @@ implements TelegramBotAPI {
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
 
+	/**
+	 * Sends a voice note.
+	 * 
+	 * @param chatId
+	 *            Unique identifier for the message recipient.
+	 * @param voice
+	 * 			  Voice note to send.
+	 * @param duration
+	 * 			  The duration of the voice note.
+	 * @param originalId
+	 *            If the message is a reply, ID of the original message.
+	 * @param markup
+	 *            Additional interface options.
+	 * @return On success, the sent Message is returned.   
+	 * @throws CommandFailedException If the command execution fails.      
+	 */
+	public final Message sendVoice(final Integer chatId, final Object voice, 
+			final Integer duration, final Integer originalId, 
+			final SelectiveObject markup)
+			throws CommandFailedException {
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_VOICE);
+		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
+		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
+		List<BasicNameValuePair> values = null;
+		if (voice instanceof InputFile) {
+			final HttpEntity multipart = ApiUtils
+					.prepareVideoOrVoice(ApiUtils.prepareEntity(
+							Constants.VOICE, chatId, 
+							(InputFile) voice, originalId, markup), 
+							duration, null);
+			httpPost.setEntity(multipart);
+		} else if (voice instanceof String) {
+			values = ApiUtils.prepareValues(chatId, (String) voice, 
+					originalId, markup, null);
+		}
+		return ApiUtils.executeApiMethod(httpPost, values);
+	}
+	
 	/**
 	 * Sends a location.
 	 * 
@@ -390,8 +438,8 @@ implements TelegramBotAPI {
 			final Float latitude, final Float longitude, 
 			final Integer originalId, final SelectiveObject markup) 
 					throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_LOCATION).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_LOCATION);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		final List<BasicNameValuePair> values = 
@@ -418,8 +466,8 @@ implements TelegramBotAPI {
 	 */
 	public final Message sendChatAction(final Integer chatId, 
 			final ActionType action) throws CommandFailedException {
-		final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-				Constants.SEND_CHAT_ACTION).toString());
+		final HttpPost httpPost = new HttpPost(this.apiUrl 
+				+ Constants.SEND_CHAT_ACTION);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
 		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
 		final List<BasicNameValuePair> values = 
@@ -451,12 +499,10 @@ implements TelegramBotAPI {
 		BufferedHttpEntity entity;
 		UserProfilePhotos photos = new UserProfilePhotos();
 		final JsonParser parser = new JsonParser();
-		httpClient = HttpClientBuilder.create()
-				.setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
-		final HttpGet httpGet = new HttpGet(new MethodUrl(botToken, 
-				Constants.GET_PHOTOS).toString());
+		final HttpGet httpGet = new HttpGet(this.apiUrl 
+				+ Constants.GET_PHOTOS);
 		try {
-			entity = new BufferedHttpEntity(httpClient.execute(httpGet)
+			entity = new BufferedHttpEntity(this.httpClient.execute(httpGet)
 					.getEntity());
 			final JsonObject object = parser.parse(EntityUtils
 					.toString(entity, Constants.ENCODING)).getAsJsonObject();
@@ -501,10 +547,7 @@ implements TelegramBotAPI {
 		Update[] updates = new Update[1];
 		BufferedHttpEntity entity;
 		final JsonParser parser = new JsonParser();
-		httpClient = HttpClientBuilder.create()
-				.setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
-		String url = new MethodUrl(botToken, Constants.GET_UPDATES)
-				.toString();
+		String url = this.apiUrl + Constants.GET_UPDATES;
 		final StringBuffer buffer = new StringBuffer(); 
 		buffer.append(url);
 		if (offset != null) {
@@ -516,7 +559,7 @@ implements TelegramBotAPI {
 		httpGet.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
         httpGet.addHeader(Constants.CHARSET, Constants.ENCODING);
         try {
-			entity = new BufferedHttpEntity(httpClient.execute(httpGet)
+			entity = new BufferedHttpEntity(this.httpClient.execute(httpGet)
 					.getEntity());
 			final JsonObject object = parser.parse(EntityUtils.toString(entity))
 					.getAsJsonObject();
@@ -559,8 +602,8 @@ implements TelegramBotAPI {
 			throws CommandFailedException {
 		final CloseableHttpClient httpclient = HttpClientBuilder.create()
 				.setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
-        final HttpPost httpPost = new HttpPost(new MethodUrl(botToken, 
-        		Constants.SET_WEBHOOK).toString());
+        final HttpPost httpPost = new HttpPost(this.apiUrl 
+        		+ Constants.SET_WEBHOOK);
         httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
         httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
         final List<BasicNameValuePair> values = 
@@ -588,80 +631,104 @@ implements TelegramBotAPI {
 				}
 			}
 	}
-	
+
 	/**
-	 * Method to process GET requests. Must be reimplemented by the bot.
-	 * @param req The HTTP GET request
-	 * @param resp The HTTP response
-	 * @throws  ServletException If the request for the GET could not be handled
-	 * @throws IOException If an input or output error is detected when the 
-	 * servlet handles the GET request
+	 * Prepare a file for download.
+	 * @param fileId
+	 * 			The ID of the file.
+	 * @return The file
+	 * @throws CommandFailedException If the command execution fails.
 	 */
-	protected final void doGet(final HttpServletRequest req, 
-			final HttpServletResponse resp) throws ServletException, 
-	IOException {
+	public final File getFile(final String fileId) 
+			throws CommandFailedException {
+		BufferedHttpEntity entity;
 		final JsonParser parser = new JsonParser();
-		final String body = EntityUtils
-				.toString(((HttpEntityEnclosingRequest) req)
-				.getEntity());
-		final JsonObject object = parser.parse(body).getAsJsonObject();
-		if (!object.has(Constants.OK)) {
-            throw new InvalidObjectException(object.toString());
-        }
-        final JsonArray array = object.get(Constants.RESULT)
-        		.getAsJsonArray();
-        if (array.size() != 0) {
-            for (int i = 0; i < array.size(); i++) {
-            	  final Update update = ApiUtils.parseUpdate(array.get(i)
-                  		.getAsJsonObject());
-                  try {
-					handleCommands(update);
-				} catch (CommandFailedException e) {
-					throw new ServletException(e);
-				}
-            }
-        }
+		JsonObject file = new JsonObject();
+		final HttpGet httpGet = new HttpGet(this.apiUrl + Constants.GET_FILE);
+		httpGet.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
+        httpGet.addHeader(Constants.CHARSET, Constants.ENCODING);
+        try {
+			entity = new BufferedHttpEntity(this.httpClient.execute(httpGet)
+					.getEntity());
+			final JsonObject object = parser.parse(EntityUtils.toString(entity))
+					.getAsJsonObject();
+			if (!object.has(Constants.OK)) {
+				throw new CommandFailedException(Constants.INVALID_RESPONSE);
+			} 
+			file = object.get(Constants.RESULT)
+					.getAsJsonObject();
+        } catch (ClientProtocolException e) {
+			if (LOG.isErrorEnabled()) {
+				LOG.error(Constants.PROTOCOL_ERROR);
+			}
+		} catch (IOException e) {
+			if (LOG.isErrorEnabled()) {
+				LOG.error(Constants.IO_ERROR);
+			}
+		}	
+        return new File(file);
 	}
 
 	/**
-	 * Method to process POST requests. Must be reimplemented by the bot.
-	 * @param req The HTTP POST request
-	 * @param resp The HTTP response
-	 * @throws  ServletException If the request for the POST could not be 
-	 * handled
-	 * @throws IOException If an input or output error is detected when the 
-	 * servlet handles the request
+	 * Accessor for the download link for the file.
+	 * @param fileId the file's ID
+	 * @return The download path for the file
+	 * @throws CommandFailedException If the command execution fails 
 	 */
-	protected final void doPost(final HttpServletRequest req, 
-			final HttpServletResponse resp) throws ServletException, 
-	IOException {
-		final JsonParser parser = new JsonParser();
-		final String body = EntityUtils
-				.toString(((HttpEntityEnclosingRequest) req)
-				.getEntity());
-		final JsonObject object = parser.parse(body).getAsJsonObject();
-		if (!object.has(Constants.OK)) {
-            throw new InvalidObjectException(object.toString());
-        }
-        final JsonArray array = object.get(Constants.RESULT)
-        		.getAsJsonArray();
-        if (array.size() != 0) {
-            for (int i = 0; i < array.size(); i++) {
-                final Update update = ApiUtils.parseUpdate(array.get(i)
-                		.getAsJsonObject());
-                try {
-					handleCommands(update);
-				} catch (CommandFailedException e) {
-					throw new ServletException(e);
-				}
-            }
-        }
+	public final String getDownloadLink(final String fileId) 
+			throws CommandFailedException {
+		return this.fileUrl	+ getFile(fileId).getFilePath();
 	}
+	
 	/**
-	 * Method to handle commands. Must be reimplemented.
-	 * @param update The update that contains the command.
+	 * Sends answers to an inline query.
+	 * @param queryId Unique identifier for the answered query
+	 * @param results A JSON-serialized array of results for the inline query
+	 * @param cacheTime Max. seconds that the result may be cached. Optional.
+	 * @param isPersonal Are results cached only for the query sender? Optional.
+	 * @param nextOffset Offset sent to receive more results. Optional.
 	 * @throws CommandFailedException If the command execution fails.
+	 * @return lol
 	 */
-	public abstract void handleCommands(Update update) 
-			throws CommandFailedException;
+	public final Boolean answerInlineQuery(final String queryId, 
+			final InlineQueryResult[] results, final Integer cacheTime, 
+			final Boolean isPersonal, final String nextOffset) 
+					throws CommandFailedException {
+		String url = this.apiUrl +  Constants.ANSWER_QUERY;
+				final StringBuffer buffer = new StringBuffer(); 
+		buffer.append(url);
+		if (nextOffset != null) {
+			buffer.append("?next_offset=");
+			buffer.append(nextOffset);
+		}
+		url = buffer.toString();		
+		final HttpPost httpPost = new HttpPost(url);
+		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
+		httpPost.addHeader(Constants.CHARSET, Constants.ENCODING);
+		final List<BasicNameValuePair> values = 
+				new ArrayList<BasicNameValuePair>();
+		values.add(new BasicNameValuePair(Constants.QUERY_ID, 
+				queryId));
+		values.add(new BasicNameValuePair(Constants.RESULTS, 
+				ApiUtils.toJson(results)));
+		values.add(new BasicNameValuePair(Constants.CACHE_TIME, 
+				cacheTime.toString()));
+		values.add(new BasicNameValuePair(Constants.IS_PERSONAL, 
+				isPersonal.toString()));
+		values.add(new BasicNameValuePair(Constants.NEXT_OFFSET, 
+				nextOffset));
+		try {
+			return ApiUtils.executeAnswerQuery(httpPost, values);
+		} catch (RetrievalFailedException e) {
+			throw new CommandFailedException(e);
+		}
+	}
+	
+	/**
+	 * Accessor for the apiUrl. 
+	 * @return the apiUrl
+	 */
+	public final String getApiUrl() {
+		return this.apiUrl;
+	}
 }
