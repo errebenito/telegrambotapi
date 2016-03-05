@@ -36,6 +36,8 @@ public interface TelegramBotAPI {
 	 * 			  Enables the use of Markdown in messages.           
 	 * @param disablePreview
 	 *            Disables link previews for links in this message.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.           
 	 * @param reply
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -44,7 +46,8 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendMessage(Integer chatId, String text, String parseMode, 
-			Boolean disablePreview,	Boolean reply, SelectiveObject markup) 
+			Boolean disablePreview, Boolean disableNotif, 
+			Boolean reply, SelectiveObject markup) 
 					throws CommandFailedException;
 
 	/**
@@ -55,12 +58,15 @@ public interface TelegramBotAPI {
 	 * @param fromId
 	 *            Unique identifier for the chat where the original message was
 	 *            sent
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.
 	 * @param messageId
 	 *            Unique message identifier
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
-	Message forwardMessage(Integer chatId, Integer fromId, Integer messageId) 
+	Message forwardMessage(Integer chatId, Integer fromId, 
+			Boolean disableNotif, Integer messageId) 
 			throws CommandFailedException;
 
 	/**
@@ -72,6 +78,8 @@ public interface TelegramBotAPI {
 	 *            Photo to send. Either a string id, or InputFile.
 	 * @param caption
 	 *            Photo caption.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.            
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message
 	 * @param markup
@@ -80,7 +88,7 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendPhoto(Integer chatId, Object photo, String caption, 
-			Integer originalId, SelectiveObject markup) 
+			Boolean disableNotif, Integer originalId, SelectiveObject markup) 
 					throws CommandFailedException;
 
 	/**
@@ -93,7 +101,9 @@ public interface TelegramBotAPI {
 	 * @param duration
 	 * 			  Duration of the audio.
 	 * @param performer 
-	 * 			  Performer of the audio.           
+	 * 			  Performer of the audio
+     * @param disableNotif
+	 * 			  Disables notifications when sending a message.      
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -102,7 +112,8 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendAudio(Integer chatId, Object audio, Integer duration, 
-			String performer, Integer originalId, SelectiveObject markup) 
+			String performer, Boolean disableNotif, 
+			Integer originalId, SelectiveObject markup) 
 					throws CommandFailedException;
 
 	/**
@@ -112,6 +123,8 @@ public interface TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param document
 	 *            BaseFile to send. Either a string id, or InputFile.
+	 *  @param disableNotif
+	 * 			  Disables notifications when sending a message.              
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -120,7 +133,8 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendDocument(Integer chatId, Object document, 
-			Integer originalId, SelectiveObject markup) 
+			Boolean disableNotif, Integer originalId, 
+			SelectiveObject markup) 
 					throws CommandFailedException;
 
 	/**
@@ -130,6 +144,8 @@ public interface TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param sticker
 	 *            Sticker to send. Either a string id, or InputFile.
+	 *  @param disableNotif
+	 * 			  Disables notifications when sending a message.             
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -137,8 +153,9 @@ public interface TelegramBotAPI {
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
-	Message sendSticker(Integer chatId, Object sticker, Integer originalId, 
-			SelectiveObject markup) throws CommandFailedException;
+	Message sendSticker(Integer chatId, Object sticker, Boolean disableNotif, 
+			Integer originalId,	SelectiveObject markup) 
+					throws CommandFailedException;
 
 	/**
 	 * Sends a video file (mp4).
@@ -150,7 +167,9 @@ public interface TelegramBotAPI {
 	 * @param duration
 	 * 			  The duration of the video.
 	 * @param caption
-	 * 			  The caption of the video.           
+	 * 			  The caption of the video.  
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.         
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -159,8 +178,8 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendVideo(Integer chatId, Object video, Integer duration, 
-			String caption, Integer originalId,	SelectiveObject markup) 
-					throws CommandFailedException;
+			String caption, Boolean disableNotif, Integer originalId,
+			SelectiveObject markup) throws CommandFailedException;
 
 	/**
 	 * Sends a voice note.
@@ -170,6 +189,8 @@ public interface TelegramBotAPI {
 	 * 			  Voice note to send. Either a string id or InputFile.
 	 * @param duration
 	 * 			  The duration of the voice note.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message. 
 	 * @param originalId
 	 * 			  If the message is a reply, ID of the original message.
 	 * @param markup
@@ -178,7 +199,7 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendVoice(Integer chatId, Object voice, Integer duration, 
-			Integer originalId,	SelectiveObject markup) 
+			Boolean disableNotif, Integer originalId, SelectiveObject markup) 
 					throws CommandFailedException;
 	
 	/**
@@ -190,6 +211,8 @@ public interface TelegramBotAPI {
 	 *            Latitude of location
 	 * @param longitude
 	 *            Longitude of location
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.             
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -198,7 +221,7 @@ public interface TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	Message sendLocation(Integer chatId, Float latitude, Float longitude, 
-			Integer originalId, SelectiveObject markup) 
+			Boolean disableNotif, Integer originalId, SelectiveObject markup) 
 					throws CommandFailedException;
 
 	/**

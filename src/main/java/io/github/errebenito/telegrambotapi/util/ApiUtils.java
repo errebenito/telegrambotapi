@@ -225,6 +225,8 @@ public final class ApiUtils {
 	 *            Unique identifier for the message recipient.
 	 * @param file
 	 *            BaseFile to send.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.             
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -233,13 +235,18 @@ public final class ApiUtils {
 	 */
 	public static MultipartEntityBuilder prepareEntity(final String fileType, 
 			final Integer chatId, final InputFile file, 
-			final Integer originalId, final SelectiveObject markup) {
+			final Boolean disableNotif, final Integer originalId, 
+			final SelectiveObject markup) {
 		final MultipartEntityBuilder builder = 
 				MultipartEntityBuilder.create();
 		builder.addTextBody(Constants.CHAT_ID, chatId.toString());
 		builder.addBinaryBody(fileType, file.getFile(),
 				ContentType.APPLICATION_OCTET_STREAM, 
 				file.getFile().getName()); 
+		if (disableNotif != null) {
+			builder.addTextBody(Constants.DISABLE_NOTIF, 
+					disableNotif.toString());
+		}
 		if (originalId != null) {
 			builder.addTextBody(Constants.REPLY_TO_ID, 
 					originalId.toString());
@@ -258,6 +265,8 @@ public final class ApiUtils {
 	 *            Unique identifier for the message recipient.
 	 * @param file
 	 *            BaseFile to send.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.            
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -268,13 +277,17 @@ public final class ApiUtils {
 	 */
 	public static List<BasicNameValuePair> prepareValues(
 			final Integer chatId, final String file, 
-			final Integer originalId, final SelectiveObject markup,
-			final String caption) {
+			final Boolean disableNotif, final Integer originalId, 
+			final SelectiveObject markup, final String caption) {
 		final List<BasicNameValuePair> values = 
 				new ArrayList<BasicNameValuePair>();
 		values.add(new BasicNameValuePair(Constants.CHAT_ID, 
 				chatId.toString()));
 		values.add(new BasicNameValuePair(Constants.DOCUMENT, file));
+		if (disableNotif != null) {
+			values.add(new BasicNameValuePair(Constants.DISABLE_NOTIF,
+					disableNotif.toString()));
+		}
 		if (originalId != null) {
 			values.add(new BasicNameValuePair(Constants.REPLY_TO_ID, 
 					originalId.toString()));

@@ -468,6 +468,11 @@ public final class Constants {
 	 * The disable_web_page_preview field name.
 	 */
 	public static final String DISABLE_PREVIEW = "disable_web_page_preview";
+	
+	/**
+	 * The disable_notification field name.
+	 */
+	public static final String DISABLE_NOTIF = "disable_notification";
 
 	/**
 	 * The base URL.

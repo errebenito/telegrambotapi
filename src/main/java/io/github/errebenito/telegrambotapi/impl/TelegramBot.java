@@ -136,6 +136,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 * 			  The flag to enable or disable Markdown           
 	 * @param disablePreview
 	 *            Disables link previews for links in this message.
+	 * @param disableNotif 
+	 * 			  Disables notifications when sending a message.        
 	 * @param reply
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -145,8 +147,9 @@ public class TelegramBot implements TelegramBotAPI {
 	 */
 	public final Message sendMessage(final Integer chatId, 
 			final String text, final String parseMode, 
-			final Boolean disablePreview, final Boolean reply, 
-			final SelectiveObject markup) throws CommandFailedException {
+			final Boolean disablePreview, final Boolean disableNotif, 
+			final Boolean reply, final SelectiveObject markup) 
+					throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_MESSAGE);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
@@ -157,7 +160,7 @@ public class TelegramBot implements TelegramBotAPI {
 				chatId.toString()));
 		values.add(new BasicNameValuePair(Constants.TEXT, text));
 		values.addAll(FieldUtils.addOptionalFields(parseMode, 
-				disablePreview, reply, markup));
+				disablePreview, disableNotif, reply, markup));
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
 
@@ -169,14 +172,16 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @param fromId
 	 *            Unique identifier for the chat where the original message was
 	 *            sent
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.            
 	 * @param messageId
 	 *            Unique message identifier
 	 * @return On success, the sent Message is returned.
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final Message forwardMessage(final Integer chatId, 
-			final Integer fromId, final Integer messageId) 
-					throws CommandFailedException {
+			final Integer fromId, final Boolean disableNotif, 
+			final Integer messageId) throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.FORWARD_MESSAGE);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
@@ -187,6 +192,8 @@ public class TelegramBot implements TelegramBotAPI {
 				chatId.toString()));
 		values.add(new BasicNameValuePair(Constants.FROM_CHAT_ID, 
 				fromId.toString()));
+		values.add(new BasicNameValuePair(Constants.DISABLE_NOTIF, 
+				disableNotif.toString()));
 		values.add(new BasicNameValuePair(Constants.MESSAGE_ID, 
 				messageId.toString()));
 		return ApiUtils.executeApiMethod(httpPost, values);
@@ -201,6 +208,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 *            Photo to send. Either a string id, or InputFile.
 	 * @param caption
 	 *            Photo caption.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.            
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message
 	 * @param markup
@@ -209,8 +218,9 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final Message sendPhoto(final Integer chatId, final Object photo, 
-			final String caption, final Integer originalId, 
-			final SelectiveObject markup) throws CommandFailedException {
+			final String caption, final Boolean disableNotif, 
+			final Integer originalId, final SelectiveObject markup) 
+					throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_PHOTO);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
@@ -219,11 +229,11 @@ public class TelegramBot implements TelegramBotAPI {
 		if (photo instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils.prepareEntity(
 					Constants.PHOTO, chatId, (InputFile) photo, 
-					originalId, markup).build();
+					disableNotif, originalId, markup).build();
             httpPost.setEntity(multipart);
 		} else if (photo instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) photo, 
-					originalId, markup, caption);
+					disableNotif, originalId, markup, caption);
 		}
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
@@ -238,7 +248,9 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @param duration
 	 * 			  The duration of the audio.
 	 * @param performer
-	 * 			  The performer of the audio.           
+	 * 			  The performer of the audio.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -248,8 +260,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 */
 	public final Message sendAudio(final Integer chatId, 
 			final Object audio, final Integer duration, 
-			final String performer, final Integer originalId,
-			final SelectiveObject markup) 
+			final String performer, final Boolean disableNotif, 
+			final Integer originalId, final SelectiveObject markup) 
 					throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_AUDIO);
@@ -259,12 +271,13 @@ public class TelegramBot implements TelegramBotAPI {
 		if (audio instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
 					.prepareAudio(ApiUtils.prepareEntity(Constants.AUDIO, 
-							chatId, (InputFile) audio, originalId, markup),
+							chatId, (InputFile) audio, disableNotif, 
+							originalId, markup),
 							duration, performer);
             httpPost.setEntity(multipart);
 		} else if (audio instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) audio, 
-					originalId, markup, null);
+					disableNotif, originalId, markup, null);
 		}
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
@@ -276,6 +289,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param document
 	 *            BaseFile to send. Either a string id, or InputFile.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -284,8 +299,9 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final Message sendDocument(final Integer chatId, 
-			final Object document, final Integer originalId, 
-			final SelectiveObject markup) throws CommandFailedException {
+			final Object document, final Boolean disableNotif, 
+			final Integer originalId, final SelectiveObject markup) 
+					throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_DOCUMENT);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
@@ -294,11 +310,12 @@ public class TelegramBot implements TelegramBotAPI {
 		if (document instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
 					.prepareEntity(Constants.DOCUMENT, chatId, 
-							(InputFile) document, originalId, markup).build();
+							(InputFile) document, disableNotif, 
+							originalId, markup).build();
             httpPost.setEntity(multipart);
 		} else if (document instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) document, 
-					originalId, markup, null);
+					disableNotif, originalId, markup, null);
 		}
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}	
@@ -310,6 +327,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 *            Unique identifier for the message recipient.
 	 * @param sticker
 	 *            Sticker to send. Either a string id, or InputFile.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.           
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -318,8 +337,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.
 	 */
 	public final Message sendSticker(final Integer chatId, 
-			final Object sticker, final Integer originalId, 
-			final SelectiveObject markup) 
+			final Object sticker, final Boolean disableNotif, 
+			final Integer originalId, final SelectiveObject markup) 
 					throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_STICKER);
@@ -329,11 +348,12 @@ public class TelegramBot implements TelegramBotAPI {
 		if (sticker instanceof InputFile) {
 			final HttpEntity multipart = ApiUtils
 					.prepareEntity(Constants.STICKER, chatId, 
-							(InputFile) sticker, originalId, markup).build();
+							(InputFile) sticker, disableNotif, originalId, 
+							markup).build();
             httpPost.setEntity(multipart);
 		} else if (sticker instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) sticker, 
-					originalId, markup, null);
+					disableNotif, originalId, markup, null);
 		}
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
@@ -348,7 +368,9 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @param duration
 	 * 			  The duration of the video.
 	 * @param caption
-	 * 			  The caption of the video.           
+	 * 			  The caption of the video.  
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.         
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -358,8 +380,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 */
 	public final Message sendVideo(final Integer chatId, final Object video, 
 			final Integer duration, final String caption, 
-			final Integer originalId, final SelectiveObject markup) 
-					throws CommandFailedException {
+			final Boolean disableNotif, final Integer originalId, 
+			final SelectiveObject markup) throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_VIDEO);
 		httpPost.addHeader(Constants.CONTENT_TYPE, Constants.URL_ENCODED);
@@ -369,12 +391,12 @@ public class TelegramBot implements TelegramBotAPI {
 			final HttpEntity multipart = ApiUtils
 					.prepareVideoOrVoice(ApiUtils.prepareEntity(
 							Constants.VIDEO, chatId, 
-							(InputFile) video, originalId, markup), 
-							duration, caption);
+							(InputFile) video, disableNotif, 
+							originalId, markup), duration, caption);
             httpPost.setEntity(multipart);
 		} else if (video instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) video, 
-					originalId, markup, null);
+					disableNotif, originalId, markup, null);
 		}
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
@@ -388,6 +410,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 * 			  Voice note to send.
 	 * @param duration
 	 * 			  The duration of the voice note.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -396,8 +420,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 * @throws CommandFailedException If the command execution fails.      
 	 */
 	public final Message sendVoice(final Integer chatId, final Object voice, 
-			final Integer duration, final Integer originalId, 
-			final SelectiveObject markup)
+			final Integer duration, final Boolean disableNotif, 
+			final Integer originalId, final SelectiveObject markup)
 			throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_VOICE);
@@ -408,12 +432,13 @@ public class TelegramBot implements TelegramBotAPI {
 			final HttpEntity multipart = ApiUtils
 					.prepareVideoOrVoice(ApiUtils.prepareEntity(
 							Constants.VOICE, chatId, 
-							(InputFile) voice, originalId, markup), 
+							(InputFile) voice, disableNotif, 
+							originalId, markup), 
 							duration, null);
 			httpPost.setEntity(multipart);
 		} else if (voice instanceof String) {
 			values = ApiUtils.prepareValues(chatId, (String) voice, 
-					originalId, markup, null);
+					disableNotif, originalId, markup, null);
 		}
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
@@ -427,6 +452,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 *            Latitude of location
 	 * @param longitude
 	 *            Longitude of location
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.
 	 * @param originalId
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -436,7 +463,8 @@ public class TelegramBot implements TelegramBotAPI {
 	 */
 	public final Message sendLocation(final Integer chatId, 
 			final Float latitude, final Float longitude, 
-			final Integer originalId, final SelectiveObject markup) 
+			final Boolean disableNotif, final Integer originalId, 
+			final SelectiveObject markup) 
 					throws CommandFailedException {
 		final HttpPost httpPost = new HttpPost(this.apiUrl 
 				+ Constants.SEND_LOCATION);
@@ -450,7 +478,8 @@ public class TelegramBot implements TelegramBotAPI {
 				latitude.toString()));
 		values.add(new BasicNameValuePair(Constants.LONGITUDE, 
 				longitude.toString()));
-		values.addAll(FieldUtils.addOptionalFields(originalId, markup));
+		values.addAll(FieldUtils.addOptionalFields(disableNotif, 
+				originalId, markup));
 		return ApiUtils.executeApiMethod(httpPost, values);
 	}
 

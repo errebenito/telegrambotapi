@@ -29,6 +29,8 @@ public final class FieldUtils {
 	 * 			The flag to enable or disable Markdown
 	 * @param disablePreview
 	 *            Disables link previews for links in this message.
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.           
 	 * @param reply
 	 *            If the message is a reply, ID of the original message.
 	 * @param markup
@@ -36,8 +38,9 @@ public final class FieldUtils {
 	 * @return A list with the optional fields' names and values.
 	 */
 	public static List<BasicNameValuePair> addOptionalFields(
-			final String parseMode, final Boolean disablePreview, 
-			final Boolean reply, final SelectiveObject markup) {
+			final String parseMode, final Boolean disablePreview,
+			final Boolean disableNotif, final Boolean reply, 
+			final SelectiveObject markup) {
 		final List<BasicNameValuePair> values = 
 				new ArrayList<BasicNameValuePair>();
 		if (parseMode != null) {
@@ -47,6 +50,10 @@ public final class FieldUtils {
 		if (disablePreview != null) {
 			values.add(new BasicNameValuePair(Constants.DISABLE_PREVIEW, 
 					disablePreview.toString()));
+		}
+		if (disableNotif != null) {
+			values.add(new BasicNameValuePair(Constants.DISABLE_NOTIF,
+					disableNotif.toString()));
 		}
 		if (reply != null) {
 			values.add(new BasicNameValuePair(Constants.REPLY_TO_ID, 
@@ -62,6 +69,8 @@ public final class FieldUtils {
 	/**
 	 * Adds the optional fields of the Document for the sendDocument method.
 	 * 
+	 * @param disableNotif
+	 * 			  Disables notifications when sending a message.
 	 * @param originalId 
 	 * 			  If the message is a reply, ID of the original message.
 	 * @param markup
@@ -69,9 +78,14 @@ public final class FieldUtils {
 	 * @return A list with the optional fields' names and values.
 	 */
 	public static List<BasicNameValuePair>  addOptionalFields(
-			final Integer originalId, final SelectiveObject markup) {
+			final Boolean disableNotif, final Integer originalId, 
+			final SelectiveObject markup) {
 		final List<BasicNameValuePair> values = 
 				new ArrayList<BasicNameValuePair>();
+		if (disableNotif != null) {
+			values.add(new BasicNameValuePair(Constants.DISABLE_NOTIF,
+					disableNotif.toString()));
+		}
 		if (originalId != null) {
 			values.add(new BasicNameValuePair(Constants.REPLY_TO_ID, 
 					originalId.toString()));
